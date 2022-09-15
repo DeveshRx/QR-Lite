@@ -1,4 +1,3 @@
-
 ![QR Lite Icon](https://deveshrx.github.io/QR-Lite/img/Google%20Play%20ScreenshotsFeatured%20Graphics.jpg)
 
 
@@ -11,17 +10,17 @@ QR Lite can generates various types of custom QR Codes, example: vCard, Website,
 
 QR Lite is powered by Machine Learning to provide high accuracy while scanning QR Code.
 
-<b>Features:</b>
-✅ Scan all types of QR Barcodes & Barcodes.
-✅ Create Custom QR Codes.
-✅ Auto Save History of Scanned or Created QR Codes.
-✅ Save QR Code to Gallery/Phone.
-✅ Share QR Code with Friends ann much more.
-✅ Easy to use.
-✅ Powered by Machine Learning.
+<b>Features:</b><br>
+✅ Scan all types of QR Barcodes & Barcodes.<br>
+✅ Create Custom QR Codes.<br>
+✅ Auto Save History of Scanned or Created QR Codes.<br>
+✅ Save QR Code to Gallery/Phone.<br>
+✅ Share QR Code with Friends ann much more.<br>
+✅ Easy to use.<br>
+✅ Powered by Machine Learning.<br>
 
-<b>Supported Barcodes Types:</b>
-Linear formats: Codabar, Code 39, Code 93, Code 128, EAN-8, EAN-13, ITF, UPC-A, UPC-E
+<b>Supported Barcodes Types:</b><br>
+Linear formats: Codabar, Code 39, Code 93, Code 128, EAN-8, EAN-13, ITF, UPC-A, UPC-E<br>
 2D formats: Aztec, Data Matrix, PDF417, QR Code
 
 ## Download
