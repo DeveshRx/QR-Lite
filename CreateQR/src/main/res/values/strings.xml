@@ -1,0 +1,14 @@
+<resources>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string-array name="wpa_list">
+        <item>none</item>
+        <item>WPA</item>
+<!--
+        <item>WPA2-EAP</item>
+-->
+        <item>WEP</item>
+    </string-array>
+</resources>

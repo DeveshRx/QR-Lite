@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+<!--
+    <PreferenceCategory android:title="Settings">
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            app:defaultValue="true"
+            app:key="@string/Pref_AutoScan"
+            app:title="Auto Scanning"
+            app:isPreferenceVisible="false"
+            />
+
+
+    </PreferenceCategory>-->
+
+    <Preference
+        app:key="buy"
+        android:title="Premium Edition"
+        android:summary="Get Ad-Free Experience"
+        />
+
+    <PreferenceCategory android:title="About">
+
+        <Preference
+            android:title="App Version"
+            android:summary="@string/app_version_name"
+            />
+
+        <Preference
+            android:title="Build Number"
+            android:summary="@string/app_version_code"
+            />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Ephrine Apps Metaverse">
+
+        <Preference
+            app:icon="@drawable/textmaster"
+            app:key="textmaster"
+            app:summary="@string/MoreApps_TextMaster_desc"
+            app:title="@string/MoreApps_TextMaster" />
+
+
+        <Preference
+            app:icon="@drawable/smsdrive_ic_launcher_web"
+            app:key="smsdrive"
+            app:summary="@string/MoreApps_SMS_Drive_desc"
+            app:title="@string/MoreApps_SMS_Drive" />
+
+        <Preference
+            app:icon="@drawable/indra_ic_launcher_playstore"
+            app:key="indra"
+            app:summary="@string/MoreApps_Indra_desc"
+            app:title="@string/MoreApps_Indra" />
+
+        <Preference
+            app:icon="@drawable/pharmahub_ic_launcher_playstore"
+            app:key="pharmahub"
+            app:summary="@string/MoreApps_PharmaHub_desc"
+            app:title="@string/MoreApps_PharmaHub" />
+
+        <Preference
+            app:icon="@drawable/jinx_icon"
+            app:key="jinx"
+            app:summary="@string/MoreApps_Jinx_desc"
+            app:title="@string/MoreApps_Jinx" />
+
+        <Preference
+            app:icon="@drawable/muzilla_ic_launcher_playstore"
+            app:key="muzilla"
+            app:summary="@string/MoreApps_Muzilla_desc"
+            app:title="@string/MoreApps_Muzilla" />
+        <!--<Preference
+            app:icon="@drawable/qrlite_ic_launcher_web"
+            app:key="qrlite"
+            app:summary="@string/MoreApps_QRLite_desc"
+            app:title="@string/MoreApps_QRLite" />
+-->
+        <Preference
+            app:icon="@drawable/sht_ic_launcher"
+            app:key="sht"
+            app:summary="@string/MoreApps_SHT_desc"
+            app:title="@string/MoreApps_SHT" />
+
+
+        <Preference
+            app:icon="@drawable/virtuallsd_ic_launcher_playstore"
+            app:key="vlsd"
+            app:summary="@string/MoreApps_VirtualLSD_desc"
+            app:title="@string/MoreApps_VirtualLSD" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="More">
+        <Preference
+            app:key="secpri"
+            app:title="Privacy Policy" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

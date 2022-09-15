@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ANALYTICS_EVENT_APP_OPEN">AppOpen</string>
+    <string name="ANALYTICS_EVENT_NAVIGATION_BAR">BottomNavBar</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED">BarcodeScanned</string>
+
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_TEXT">Barcode_Scanned_Text</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_URL">Barcode_Scanned_URL</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_EMAIL">Barcode_Scanned_Email</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_PHONE">Barcode_Scanned_Phone</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_PHONE_SMS">Barcode_Scanned_Phone_SMS</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_WIFI">Barcode_Scanned_Phone_Wifi</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_Geo">Barcode_Scanned_Phone_Geo</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_Calender">Barcode_Scanned_Phone_Calender</string>
+    <string name="ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic">Barcode_Scanned_Phone_DrivingLic</string>
+
+    <string name="ANALYTICS_EVENT_OPEN_HISTORY">Barcode_History_Open</string>
+
+    <string name="ANALYTICS_EVENT_PREMIUM_MEMBER">Premium_Member</string>
+    <string name="ANALYTICS_EVENT_NON_PREMIUM_MEMBER">Non_Premium_Member</string>
+
+
+
+
+</resources>

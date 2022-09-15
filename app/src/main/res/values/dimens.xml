@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="createqr_size">70dp</dimen>
+    <dimen name="create_qr_card_title">16sp</dimen>
+</resources>

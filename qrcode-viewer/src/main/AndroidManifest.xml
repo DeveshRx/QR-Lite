@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="devesh.ephrine.qr.qrcode_viewer">
+
+    <application
+        android:theme="@style/Theme.NoActionBar">
+        <activity
+            android:name=".ViewQRCodeActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>

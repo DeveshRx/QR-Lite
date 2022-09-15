@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="Pref_AutoScan">prefautoscan</string>
+    <string name="Pref_isAppReviewed">PrefisAppReviewed</string>
+
+    <string name="Pref_isSubscribed">PrefisSubscribed</string>
+</resources>
