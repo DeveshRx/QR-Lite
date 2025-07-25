@@ -1,18 +1,17 @@
 package devesh.app.billing;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ProductDetails;
-import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 
@@ -23,7 +22,7 @@ import devesh.ephrine.qr.common.CachePref;
 
 
 public class BillingActivity extends AppCompatActivity {
-String TAG="BillAct";
+    String TAG = "BillAct";
     ActivityBillingBinding binding;
     GPlayBilling gPlayBilling;
 
@@ -44,7 +43,7 @@ String TAG="BillAct";
                 Log.d(TAG, "onPurchasesUpdated: BillingClient.BillingResponseCode.OK");
                 for (Purchase purchase : purchases) {
                     //handlePurchase(purchase);
-                    
+
                 }
             } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
                 // Handle an error caused by a user cancelling the purchase flow.
@@ -59,18 +58,18 @@ String TAG="BillAct";
     };
 
     boolean isGooglePlayServiceAvailable;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        isSubscribed=false;
-        price=null;
+        isSubscribed = false;
+        price = null;
 
         binding = ActivityBillingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        gPlayBilling=new GPlayBilling(this, purchasesUpdatedListener);
-        cachePref=new CachePref(this);
+        gPlayBilling = new GPlayBilling(this, purchasesUpdatedListener);
+        cachePref = new CachePref(this);
 
     }
 
@@ -78,7 +77,7 @@ String TAG="BillAct";
     protected void onStart() {
         super.onStart();
 
-        isSubscribed=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
+        isSubscribed = cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
 
         gPlayBilling.init(new BillingClientStateListener() {
             @Override
@@ -99,27 +98,27 @@ String TAG="BillAct";
 
         try {
             getProducts();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
         try {
             fetchOwnedPlans();
 
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
         setUIDetails();
 
         // Check Google Play Services
-        if(gPlayBilling.isGooglePlayServicesAvailable()){
+        if (gPlayBilling.isGooglePlayServicesAvailable()) {
             // Google Play Services Available
             Log.d(TAG, "onStart: Google Play Services Available");
             binding.SubNowButton.setVisibility(View.VISIBLE);
             binding.ErrorLL.setVisibility(View.GONE);
 
 
-        }else{
+        } else {
             // Google Play Services not Available
             Log.d(TAG, "onStart: Google Play Services not Available");
             binding.ErrorLL.setVisibility(View.VISIBLE);
@@ -129,52 +128,60 @@ String TAG="BillAct";
 
     }
 
-    void getProducts(){
-        gPlayBilling.getProducts(new ProductDetailsResponseListener() {
-            @Override
-            public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull List<ProductDetails> list) {
-                Log.d(TAG, "onProductDetailsResponse: "+list.get(0).toString());
-                productDetails=list.get(0);
-                gPlayBilling.productDetails=productDetails;
+    void getProducts() {
+        gPlayBilling.getProducts(
+                (billingResult, queryProductDetailsResult) -> {
+                    try {
 
-                ProductDetails.SubscriptionOfferDetails s= productDetails.getSubscriptionOfferDetails().get(0);
-                price=s.getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice();
-                period=s.getPricingPhases().getPricingPhaseList().get(0).getBillingPeriod();
-                    Log.d(TAG, "onProductDetailsResponse: SubscriptionOfferDetails "+s.toString());
-                    Log.d(TAG, "onProductDetailsResponse: getOfferTags "+s.getPricingPhases().getPricingPhaseList().get(0));
+                        List<ProductDetails> list = queryProductDetailsResult.getProductDetailsList();
 
-                setUIDetails();
+                        Log.d(TAG, "onProductDetailsResponse: " + list.get(0).toString());
+                        productDetails = list.get(0);
+                        gPlayBilling.productDetails = productDetails;
 
-            }
-        });
+                        ProductDetails.SubscriptionOfferDetails s = productDetails.getSubscriptionOfferDetails().get(0);
+                        price = s.getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice();
+                        period = s.getPricingPhases().getPricingPhaseList().get(0).getBillingPeriod();
+                        Log.d(TAG, "onProductDetailsResponse: SubscriptionOfferDetails " + s);
+                        Log.d(TAG, "onProductDetailsResponse: getOfferTags " + s.getPricingPhases().getPricingPhaseList().get(0));
+
+                        setUIDetails();
+
+                    } catch (Exception e) {
+
+
+                        throw new RuntimeException(e);
+                    }
+
+                });
 
 
     }
 
-    public void PayNow(View v){
+    public void PayNow(View v) {
 
-        if(!isSubscribed){
-            BillingResult result=gPlayBilling.StatPay(productDetails.getSubscriptionOfferDetails().get(0).getOfferToken());
-            Log.d(TAG, "PayNow: "+result.getResponseCode());
-        }else{
+        if (!isSubscribed) {
+            BillingResult result = gPlayBilling.StatPay(productDetails.getSubscriptionOfferDetails().get(0).getOfferToken());
+            Log.d(TAG, "PayNow: " + result.getResponseCode());
+        } else {
             Toast.makeText(this, "Thank You for Subscribing to Premium Plan", Toast.LENGTH_LONG).show();
         }
 
 
     }
 
-    void setUIDetails(){
+    void setUIDetails() {
         //String price=productDetails.getSubscriptionOfferDetails();
         runOnUiThread(() -> {
-if(price!=null){
-    binding.PriceTextView.setText(price);
-}
+            if (price != null) {
+                binding.PriceTextView.setText(price);
+            }
 
 
-            if(isSubscribed){
+            if (isSubscribed) {
                 binding.SubNowButton.setText("Subscribed");
                 binding.ThankYouTextview.setVisibility(View.VISIBLE);
-            }else{
+            } else {
                 binding.SubNowButton.setText("Subscribe Now");
                 binding.ThankYouTextview.setVisibility(View.GONE);
             }
@@ -184,34 +191,33 @@ if(price!=null){
 
     }
 
-    void fetchOwnedPlans(){
+    void fetchOwnedPlans() {
         gPlayBilling.fetchPayments((billingResult, list) -> {
-if(list.isEmpty()){
-    isSubscribed=false;
-}
-            for (Purchase p:list) {
-                int state=p.getPurchaseState();
-                Log.d(TAG, "fetchOwnedPlans: "+p.getOrderId()+"\nState: "+p.getPurchaseState());
-                if(state== Purchase.PurchaseState.PURCHASED){
+            if (list.isEmpty()) {
+                isSubscribed = false;
+            }
+            for (Purchase p : list) {
+                int state = p.getPurchaseState();
+                Log.d(TAG, "fetchOwnedPlans: " + p.getOrderId() + "\nState: " + p.getPurchaseState());
+                if (state == Purchase.PurchaseState.PURCHASED) {
                     Log.d(TAG, "fetchOwnedPlans: PURCHASED");
-                    isSubscribed=true;
-                }else if(state== Purchase.PurchaseState.PENDING){
+                    isSubscribed = true;
+                } else if (state == Purchase.PurchaseState.PENDING) {
                     Log.d(TAG, "fetchOwnedPlans: PENDING");
-                    isSubscribed=true;
+                    isSubscribed = true;
 
-                }else if(state== Purchase.PurchaseState.UNSPECIFIED_STATE){
+                } else if (state == Purchase.PurchaseState.UNSPECIFIED_STATE) {
                     Log.d(TAG, "fetchOwnedPlans: UNSPECIFIED_STATE");
-                    isSubscribed=false;
-                }else{
-                    isSubscribed=false;
+                    isSubscribed = false;
+                } else {
+                    isSubscribed = false;
                     Log.d(TAG, "fetchOwnedPlans: UNSPECIFIED_STATE unknown");
                 }
             }
-            cachePref.setBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed),isSubscribed);
+            cachePref.setBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed), isSubscribed);
             setUIDetails();
         });
     }
-    
-    
+
 
 }

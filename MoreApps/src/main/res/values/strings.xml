@@ -1,4 +1,9 @@
 <resources>
+
+
+
+    <!--- DEPRECIADED -->
+
     <!--SMS Drive-->
 <string name="MoreApps_SMS_Drive">SMS Drive</string>
     <string name="MoreApps_SMS_Drive_desc">Backup solution to sync your SMS messages across devices</string>

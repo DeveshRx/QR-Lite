@@ -12,6 +12,13 @@
 #   public *;
 #}
 
+
+-keep class devesh.ephrine.qr.createqr.R$string { *; }
+
+-keep class devesh.ephrine.qr.createqr.R$string
+
+-keep class devesh.ephrine.qr.createqr.R
+
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
 #-keepattributes SourceFile,LineNumberTable

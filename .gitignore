@@ -66,3 +66,5 @@ Footer
 APK/apk/release/app-release.apk
 APK/apk/release/output-metadata.json
 *.aab
+
+*.zip

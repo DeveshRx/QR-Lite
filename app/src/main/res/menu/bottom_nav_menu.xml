@@ -4,21 +4,21 @@
 
     <item
         android:id="@+id/menu_scan"
-        android:title="Scan"
-        android:icon="@drawable/ic_baseline_qr_code_scanner_40"/>
+        android:icon="@drawable/ic_baseline_qr_code_scanner_40"
+        android:title="Scan" />
 
     <item
         android:id="@+id/menu_create"
-        android:title="Create"
-        android:icon="@drawable/ic_baseline_qr_code_40"/>
+        android:icon="@drawable/ic_baseline_qr_code_40"
+        android:title="Create" />
 
     <item
         android:id="@+id/menu_history"
-        android:title="History"
-        android:icon="@drawable/ic_baseline_history_40"/>
+        android:icon="@drawable/ic_baseline_history_40"
+        android:title="History" />
 
     <item
         android:id="@+id/menu_settings"
-        android:title="Settings"
-        android:icon="@drawable/ic_baseline_settings_40"/>
+        android:icon="@drawable/ic_baseline_settings_40"
+        android:title="Settings" />
 </menu>

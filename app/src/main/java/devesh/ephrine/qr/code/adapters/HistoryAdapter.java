@@ -20,9 +20,9 @@ import devesh.ephrine.qr.database.QRCodeFile;
 import devesh.ephrine.qr.database.QRCodeTypeConstants;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
+    private final List<QRCodeFile> localDataSet;
     String TAG = "HistoryAdapt";
     Context mContext;
-    private final List<QRCodeFile> localDataSet;
 
     public HistoryAdapter(Context context, List<QRCodeFile> dataSet) {
         localDataSet = dataSet;

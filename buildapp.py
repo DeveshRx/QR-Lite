@@ -30,10 +30,10 @@ else:
     subprocess.run("gradlew assemble bundle --stacktrace", shell=True, check=True)
     
 
-if platform.system() == "Linux":
-    subprocess.run("./gradlew appDistributionUploadInternal appDistributionUploadRelease --stacktrace", shell=True, check=True)
-else:
-    subprocess.run("gradlew appDistributionUploadInternal appDistributionUploadRelease  --stacktrace", shell=True, check=True)
+#if platform.system() == "Linux":
+#    subprocess.run("./gradlew appDistributionUploadInternal appDistributionUploadRelease --stacktrace", shell=True, check=True)
+#else:
+#    subprocess.run("gradlew appDistributionUploadInternal appDistributionUploadRelease  --stacktrace", shell=True, check=True)
 
 
 

@@ -17,6 +17,7 @@ import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
 import com.android.billingclient.api.ConsumeResponseListener;
+import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
@@ -38,7 +39,7 @@ public class GPlayBilling  {
     AcknowledgePurchaseResponseListener acknowledgePurchaseResponseListener;
     Activity mActivity=null;
 
-    private final PurchasesUpdatedListener purchasesUpdatedListenerX = new PurchasesUpdatedListener() {
+   /* private final PurchasesUpdatedListener purchasesUpdatedListenerX = new PurchasesUpdatedListener() {
         @Override
         public void onPurchasesUpdated(BillingResult billingResult,
                                        List<Purchase> purchases) {
@@ -72,13 +73,15 @@ public class GPlayBilling  {
             Log.d(TAG, "onBillingServiceDisconnected: ");
         }
     };
-    ProductDetailsResponseListener productDetailsResponseListenerX=new ProductDetailsResponseListener() {
-        @Override
-        public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull List<ProductDetails> list) {
+    */
+//    ProductDetailsResponseListener productDetailsResponseListenerX=new ProductDetailsResponseListener() {
+//        @Override
+//        public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull List<ProductDetails> list) {
+//
+//        }
+//    };
 
-        }
-    };
-    ConsumeResponseListener consumeResponseListenerX=new ConsumeResponseListener() {
+  /*  ConsumeResponseListener consumeResponseListenerX=new ConsumeResponseListener() {
         @Override
         public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String s) {
 
@@ -90,13 +93,13 @@ public class GPlayBilling  {
 
         }
     };
-
+*/
 
     public GPlayBilling(Activity activity, PurchasesUpdatedListener purchasesUpdatedListener){
         mActivity=activity;
         billingClient = BillingClient.newBuilder(mActivity)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
                 .build();
 
     }

@@ -3,7 +3,7 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
     id 'com.google.firebase.appdistribution'
-
+    id 'kotlin-android'
 }
 
 def keySignFile = project.keySignFile
@@ -12,8 +12,8 @@ def keySignAlias = project.keySignAlias
 def keySignAliasPassword = project.keySignAliasPassword
 
 
-def AppVersionCode=project.AppBuildNo;
-def AppVersionName=project.AppVersionName;
+def AppVersionCode = project.AppBuildNo;
+def AppVersionName = project.AppVersionName;
 
 android {
     compileSdk project.compileSDK
@@ -29,20 +29,23 @@ android {
     }
     defaultConfig {
         applicationId "devesh.ephrine.qr.code"
-        minSdk 21
+        minSdk project.MiniApiTarget
+        //  minSdk 21
         targetSdk project.compileSDK
         versionCode AppVersionCode
         versionName AppVersionName
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+       // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         resValue "string", "app_version_code", "\"" + AppVersionCode + "\""
 
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        signingConfig signingConfigs.release
 
     }
 
     buildTypes {
-        debug{
+        debug {
             resValue "string", "app_version_name", "\"" + AppVersionName + "\""
 
             resValue "bool", "FirebaseAnalytics_Enabled", "false"
@@ -53,38 +56,37 @@ android {
 
         }
         internal {
-            resValue "string", "app_version_name", "\"" + AppVersionName+" (Internal)" + "\""
+            resValue "string", "app_version_name", "\"" + AppVersionName + " (Internal)" + "\""
 
             resValue "bool", "FirebaseAnalytics_Enabled", "false"
             resValue "bool", "FirebaseAnalytics_Deactivated", "true"
 
             minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+          //  shrinkResources true
+        //    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
-            signingConfig signingConfigs.release
+           // signingConfig signingConfigs.release
 
-            firebaseAppDistribution {
+            /*firebaseAppDistribution {
                 releaseNotes = "Version: $AppVersionName (Internal) \nBuild no: $AppVersionCode"
                 groups = "testers"
-            }
+            }*/
         }
-            release {
+        release {
             resValue "string", "app_version_name", "\"" + AppVersionName + "\""
 
             resValue "bool", "FirebaseAnalytics_Enabled", "true"
             resValue "bool", "FirebaseAnalytics_Deactivated", "false"
 
             minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+         //   shrinkResources true
 
-            signingConfig signingConfigs.release
+          //  signingConfig signingConfigs.release
 
-            firebaseAppDistribution {
-                releaseNotes = "Version: $AppVersionName \nBuild no: $AppVersionCode"
-                groups = "testers"
-            }
+            /* firebaseAppDistribution {
+                 releaseNotes = "Version: $AppVersionName \nBuild no: $AppVersionCode"
+                 groups = "testers"
+             }*/
 
         }
     }
@@ -95,6 +97,8 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    namespace 'devesh.ephrine.qr.code'
 
 }
 
@@ -109,7 +113,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-perf'
     implementation 'com.google.firebase:firebase-appcheck-playintegrity'
     implementation 'com.google.firebase:firebase-config'
-
+    implementation 'com.google.firebase:firebase-inappmessaging-display'
+    implementation 'com.google.firebase:firebase-messaging'
 
     implementation "androidx.fragment:fragment:$project.fragment_version"
 
@@ -123,14 +128,14 @@ dependencies {
     implementation project(path: ':cropper')
 
     // Preferences
-   implementation "androidx.preference:preference:$project.preferences_version"
+    implementation "androidx.preference:preference:$project.preferences_version"
     implementation project(path: ':MoreApps')
     implementation project(path: ':billing')
 
 
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+//    testImplementation 'junit:junit:4.13.2'
+    // androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    // androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     // MLKit Barcode
     implementation "com.google.mlkit:barcode-scanning:$project.barcode_scanning_version"
@@ -151,6 +156,7 @@ dependencies {
     // Room Database
 
     implementation "androidx.room:room-runtime:$project.room_version"
+    implementation 'androidx.activity:activity:1.10.1'
     annotationProcessor "androidx.room:room-compiler:$project.room_version"
 
     // optional - RxJava2 support for Room
@@ -175,19 +181,19 @@ dependencies {
     implementation "com.hbb20:ccp:$project.ccp_version"
 
 
-
     // ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel:$project.lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$project.lifecycle_version"
+    // implementation "androidx.lifecycle:lifecycle-viewmodel:$project.lifecycle_version"
+    //implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$project.lifecycle_version"
 
     implementation "androidx.browser:browser:$project.browser_version"
 
     //Google Play Core
-    implementation "com.google.android.play:core:$project.play_core_version"
+    // implementation "com.google.android.play:core:$project.play_core_version"
+    implementation "com.google.android.play:review:$project.play_app_review"
 
-    def billing_version = "5.0.0"
-   implementation "com.android.billingclient:billing:$billing_version"
-   implementation "com.google.android.gms:play-services-base:$project.play_services_base"
+
+    implementation "com.android.billingclient:billing:$project.billing_version"
+    implementation "com.google.android.gms:play-services-base:$project.play_services_base"
 
     //MS App Center
 //    def appCenterSdkVersion = '4.3.1'
@@ -195,5 +201,27 @@ dependencies {
     implementation "com.microsoft.appcenter:appcenter-analytics:$project.MSAppCenter_version"
     implementation "com.microsoft.appcenter:appcenter-crashes:$project.MSAppCenter_version"
 
+ //   implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.20"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.22"))
 
+
+// Kotlin
+    //implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    // implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
+
+
+    implementation "com.google.guava:guava:33.4.8-android" // Or the latest compatible version
 }
+
+
+/*
+configurations {
+    all {
+        resolutionStrategy {
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21'
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
+        }
+    }
+}*/
+
+

@@ -33,7 +33,9 @@ public class AppAnalytics {
             AppCenter.start(Crashes.class);
         }
 
-        if(BuildConfig.DEBUG){
+        if(BuildConfig.BUILD_TYPE.equals("release")){
+
+        }else{
             mFirebaseAnalytics.setAnalyticsCollectionEnabled(false);
 
         }
@@ -43,7 +45,7 @@ public class AppAnalytics {
     }
 
     public void logEvent(String EventName,Map<String, String> properties) {
-       if(!BuildConfig.DEBUG){
+       if(BuildConfig.BUILD_TYPE.equals("release")){
 
            Bundle bundle = new Bundle();
            for (Map.Entry<String, String> entry : properties.entrySet()) {

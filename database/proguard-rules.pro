@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class devesh.ephrine.qr.database.R$string { *; }
+
+-keep class devesh.ephrine.qr.database.R$string
+
+-keep class devesh.ephrine.qr.database.R
+

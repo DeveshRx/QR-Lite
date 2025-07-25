@@ -11,17 +11,20 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
     }
 
     buildTypes {
         internal {
 
-            minifyEnabled true
+        //  minifyEnabled true
      //       shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
         }
         release {
-            minifyEnabled true
+          //  minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -32,6 +35,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'devesh.ephrine.qr.createqr'
 
 }
 
@@ -42,11 +46,15 @@ dependencies {
     api "androidx.appcompat:appcompat:$project.appcompat_version"
     api "com.google.android.material:material:$project.material_version"
     api "androidx.constraintlayout:constraintlayout:$project.constraintlayout_version"
-    testImplementation 'junit:junit:4.13.2'
+  /*  testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-
+*/
     // CCP
     implementation "com.hbb20:ccp:$project.ccp_version"
+
+
+// Kotlin
+    api "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
 
 }

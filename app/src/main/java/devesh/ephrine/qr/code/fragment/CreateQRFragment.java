@@ -18,7 +18,8 @@ public class CreateQRFragment extends Fragment {
 
     FragmentCreateQrBinding mBinding;
     String TAG = "CreateQR";
-AdMobAPI adMobAPI;
+    AdMobAPI adMobAPI;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,7 +27,7 @@ AdMobAPI adMobAPI;
             //        mParam1 = getArguments().getString(ARG_PARAM1);
             //       mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        adMobAPI=new AdMobAPI(getActivity());
+        adMobAPI = new AdMobAPI(getActivity());
     }
 
     @Override
@@ -94,8 +95,8 @@ AdMobAPI adMobAPI;
 
     }
 
-    void loadAds(){
-        adMobAPI.setAdaptiveBanner(mBinding.adFrame,getActivity());
+    void loadAds() {
+        adMobAPI.setAdaptiveBanner(mBinding.adFrame, getActivity());
     }
 
 

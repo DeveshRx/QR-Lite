@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.google.android.gms.tasks.Task;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
 import com.google.android.play.core.review.ReviewManagerFactory;
 import com.google.android.play.core.review.testing.FakeReviewManager;
-import com.google.android.play.core.tasks.Task;
 
 
 

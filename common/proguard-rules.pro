@@ -19,3 +19,30 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class devesh.ephrine.qr.common.R$string { *; }
+
+-keep class devesh.ephrine.qr.common.R$string
+
+-keep class devesh.ephrine.qr.common.R
+
+
+-keep class devesh.ephrine.qr.common.AdMobAPI { *; }
+
+
+
+# Keep AppAnalytics and its members
+-keep class devesh.ephrine.qr.common.AppAnalytics { *; }
+
+# Keep AppReviewTask and its members
+-keep class devesh.ephrine.qr.common.AppReviewTask { *; }
+
+# Keep BarcodeAPI and its members
+-keep class devesh.ephrine.qr.common.BarcodeAPI { *; }
+
+# Keep CachePref and its members
+-keep class devesh.ephrine.qr.common.CachePref { *; }
+
+# Keep CreateQRCodeApi and its members, including nested classes like VCard
+-keep class devesh.ephrine.qr.common.CreateQRCodeApi { *; }
+-keep class devesh.ephrine.qr.common.CreateQRCodeApi$* { *; } # Keeps all nested classes

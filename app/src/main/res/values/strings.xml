@@ -1,7 +1,11 @@
 <resources>
     <string name="app_name" translatable="false">QR Lite</string>
+
+    <string name="deveshrx_website" translatable="false">https://deveshrx.com</string>
+
+
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_blank_fragment" translatable="false">Hello blank fragment</string>
 
 
 </resources>

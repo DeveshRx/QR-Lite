@@ -1,14 +1,13 @@
 package devesh.ephrine.qr.code;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -16,13 +15,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.ImageProxy;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -34,9 +34,11 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
@@ -92,29 +94,57 @@ import devesh.ephrine.qr.qrcode_viewer.fragments.WiFiQrCodeOpenFragment;
 public class MainActivity extends AppCompatActivity {
 
     static final int PERMISSION_REQUEST_CODE = 5050;
-
+    final static boolean isAutoScan = true;
     String TAG = "MainAct";
     ActivityMainBinding mBinding;
     FragmentManager fragmentManager;
     Fragment fragmentScreen;
     Fragment oldFrag;
-
     BarcodeAPI barcodeAPI;
     int CurrentSelected;
     Gson gson;
     AppDatabase AppDB;
     String oldBarcodeRaw = "";
-
-   final static boolean isAutoScan=true;
     CachePref cachePref;
     AppReviewTask appReviewTask;
-AdMobAPI adMobAPI;
-boolean isIntAdShowed;
-boolean isSubscribed;
-GPlayBilling gPlayBilling;
+    AdMobAPI adMobAPI;
+    boolean isIntAdShowed;
+    boolean isSubscribed;
+    GPlayBilling gPlayBilling;
 
-AppAnalytics appAnalytics;
+    AppAnalytics appAnalytics;
+    ActivityResultLauncher<Intent> openGalleryApp = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    //Bundle extras = result.getData().getExtras();
+                    Log.d(TAG, "onActivityResult: " + result);
+                    //Bitmap imageBitmap = (Bitmap) extras.get("data");
+                    //   imageView1.setImageBitmap(imageBitmap);
+                    //     Bundle extras = result.getData().getExtras();
+                    //Bundle extras = result.getData().getExtras();
+                    if (result.getData() != null) {
+                        Intent i = result.getData();
+                        Uri uri = i.getData();
+                        Log.d(TAG, "onActivityResult: " + i.getData());
 
+                        ShowLoadingView(false);
+
+                        CropImage.activity(uri)
+                                .setAutoZoomEnabled(true)
+                                .setMultiTouchEnabled(true)
+                                .start(MainActivity.this);
+
+
+                    } else {
+                        ShowLoadingView(false);
+
+                    }
+
+
+                }
+            });
     private ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -129,49 +159,112 @@ AppAnalytics appAnalytics;
                 }
             });
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        isIntAdShowed=false;
+        isIntAdShowed = false;
         isSubscribed = false;
         //DynamicColors.applyToActivitiesIfAvailable(getApplication());
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         View view = mBinding.getRoot();
         setContentView(view);
+
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Custom back press logic
+                if (fragmentManager.findFragmentByTag("home") != null) {
+                    if (fragmentManager.findFragmentByTag("home").isVisible()) {
+                        fragmentManager.findFragmentByTag("home").onDestroy();
+                        MainActivity.this.finish();
+                    }
+
+                }
+
+                //     super.onBackPressed();
+
+                if (fragmentManager != null) {
+                    if (fragmentManager.findFragmentByTag("create") != null) {
+                        if (fragmentManager.findFragmentByTag("create").isVisible()) {
+
+                            MainActivity.this.finish();
+
+                        }
+                    }
+
+
+                }
+
+                if (fragmentManager.findFragmentByTag("history") != null) {
+                    if (fragmentManager.findFragmentByTag("history").isVisible()) {
+                        fragmentManager.findFragmentByTag("history").onDestroy();
+                        if (adMobAPI.mInterstitialAd != null) {
+                            adMobAPI.ShowInterstitialAd();
+                        }
+                    }
+
+                }
+
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, callback);
+
+
+
         gson = new Gson();
         barcodeAPI = new BarcodeAPI(this);
         fragmentScreen = new CameraFragment();
         fragmentManager = getSupportFragmentManager();
         CurrentSelected = R.id.menu_scan;
-        cachePref=new CachePref(this);
+        cachePref = new CachePref(this);
 
-     //   isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
+        //   isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
 
         //Initialization
         AppDB = Room.databaseBuilder(this,
                         AppDatabase.class, getString(devesh.ephrine.qr.database.R.string.DB_NAME))
                 .fallbackToDestructiveMigration().allowMainThreadQueries().build();
         ReceiveShareIntent();
-        appReviewTask=new AppReviewTask(this,this);
+        appReviewTask = new AppReviewTask(this, this);
 
-        adMobAPI=new AdMobAPI(this);
+        adMobAPI = new AdMobAPI(this);
         RequestPermission();
-appAnalytics=new AppAnalytics(getApplication(),this);
+        appAnalytics = new AppAnalytics(getApplication(), this);
         gPlayBilling = new GPlayBilling(this, (billingResult, list) -> {
 
         });
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put("App_Open","1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_APP_OPEN),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put("App_Open", "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_APP_OPEN), aa);
 
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(new OnCompleteListener<String>() {
+                    @Override
+                    public void onComplete(@NonNull Task<String> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                            return;
+                        }
+
+                        // Get new FCM registration token
+                        String token = task.getResult();
+
+                        // Log and toast
+                        Log.d(TAG, "FCM Token : "+token);
+
+                    }
+                });
+
+        notification();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-    //    isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
+        //    isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
         BillingStart();
 
         if (fragmentScreen == null) {
@@ -196,7 +289,7 @@ appAnalytics=new AppAnalytics(getApplication(),this);
         mBinding.bottomNavigation.setOnItemSelectedListener(item -> {
 
             oldBarcodeRaw = "";
-            if(adMobAPI.mInterstitialAd!=null && !isIntAdShowed && !isSubscribed){
+            if (adMobAPI.mInterstitialAd != null && !isIntAdShowed && !isSubscribed) {
                 adMobAPI.ShowInterstitialAd();
 
             }
@@ -213,25 +306,25 @@ appAnalytics=new AppAnalytics(getApplication(),this);
                 setFragment(new HistoryFragment(), null, "history");
 
 
-            }else if (item.getItemId() == R.id.menu_settings) {
+            } else if (item.getItemId() == R.id.menu_settings) {
                 setFragment(new SettingsFragment(), null, "settings");
 
             }
 
-            if(adMobAPI.mInterstitialAd==null && !isIntAdShowed && !isSubscribed){
+            if (adMobAPI.mInterstitialAd == null && !isIntAdShowed && !isSubscribed) {
                 adMobAPI.LoadInterstitialAd(this);
             }
 
 
             intAdListner();
 
-            if(!appReviewTask.isAppReviewed()){
+            if (!appReviewTask.isAppReviewed()) {
                 appReviewTask.requestAppReview();
             }
 
-            Map<String,String> aa=new HashMap<>();
-            aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NAVIGATION_BAR),"1");
-            appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NAVIGATION_BAR),aa);
+            Map<String, String> aa = new HashMap<>();
+            aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NAVIGATION_BAR), "1");
+            appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NAVIGATION_BAR), aa);
 
 
             return true;
@@ -242,64 +335,25 @@ appAnalytics=new AppAnalytics(getApplication(),this);
 
         });
 
-
-
     }
 
-    @Override
-    public void onBackPressed() {
-
-        if (fragmentManager.findFragmentByTag("home") != null) {
-            if (fragmentManager.findFragmentByTag("home").isVisible()) {
-                fragmentManager.findFragmentByTag("home").onDestroy();
-                MainActivity.this.finish();
-            }
-
-        }
-
-        //     super.onBackPressed();
-
-        if (fragmentManager != null) {
-            if (fragmentManager.findFragmentByTag("create") != null) {
-                if (fragmentManager.findFragmentByTag("create").isVisible()) {
-
-                    MainActivity.this.finish();
-
-                }
-            }
 
 
-        }
-        super.onBackPressed();
-
-        if (fragmentManager.findFragmentByTag("history") != null) {
-            if (fragmentManager.findFragmentByTag("history").isVisible()) {
-                fragmentManager.findFragmentByTag("history").onDestroy();
-if(adMobAPI.mInterstitialAd!=null){
-    adMobAPI.ShowInterstitialAd();
-}
-            }
-
-        }
-
-
-    }
-
-    void intAdListner(){
-        if(adMobAPI.mInterstitialAd!=null){
+    void intAdListner() {
+        if (adMobAPI.mInterstitialAd != null) {
             adMobAPI.mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                 @Override
                 public void onAdDismissedFullScreenContent() {
                     // Called when fullscreen content is dismissed.
                     Log.d("TAG", "The ad was dismissed.");
-                    isIntAdShowed=true;
+                    isIntAdShowed = true;
                 }
 
                 @Override
                 public void onAdFailedToShowFullScreenContent(AdError adError) {
                     // Called when fullscreen content failed to show.
                     Log.d("TAG", "The ad failed to show.");
-                    isIntAdShowed=true;
+                    isIntAdShowed = true;
                 }
 
                 @Override
@@ -309,13 +363,12 @@ if(adMobAPI.mInterstitialAd!=null){
                     // show it a second time.
                     //  mInterstitialAd = null;
                     Log.d("TAG", "The ad was shown.");
-                    isIntAdShowed=true;
+                    isIntAdShowed = true;
                 }
             });
 
         }
     }
-
 
     void setFragment(Fragment fragment, Bundle bundle, String tag) {
         oldFrag = fragmentScreen;
@@ -347,7 +400,17 @@ if(adMobAPI.mInterstitialAd!=null){
                 .commit();*/
     }
 
-    void setFragment(Fragment fragment, Bundle bundle, String tag,boolean add2stack) {
+   /* public void analyzeIMG(InputImage image) {
+       // @SuppressLint("UnsafeOptInUsageError")
+      //  InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), 0);
+        barcodeScan(image);
+
+        //imageProxy.close();
+
+
+    }*/
+
+    void setFragment(Fragment fragment, Bundle bundle, String tag, boolean add2stack) {
         oldFrag = fragmentScreen;
         fragmentScreen = fragment;
         if (bundle != null) {
@@ -358,13 +421,13 @@ if(adMobAPI.mInterstitialAd!=null){
 
 
         fragmentManager.beginTransaction()
-               //   .hide(oldFrag)
+                //   .hide(oldFrag)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE)
                 .replace(mBinding.fragmentContainerView.getId(), fragmentScreen, tag)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
 
-                   .setReorderingAllowed(true)
-                  .addToBackStack("app")
+                .setReorderingAllowed(true)
+                .addToBackStack("app")
                 .commit();
 
 
@@ -378,19 +441,9 @@ if(adMobAPI.mInterstitialAd!=null){
                 .commit();*/
     }
 
-   /* public void analyzeIMG(InputImage image) {
-       // @SuppressLint("UnsafeOptInUsageError")
-      //  InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), 0);
-        barcodeScan(image);
+    public void barcodeScan(InputImage image) {
 
-        //imageProxy.close();
-
-
-    }*/
-
-   public void barcodeScan(InputImage image){
-
-      barcodeAPI.getScanner().process(image)
+        barcodeAPI.getScanner().process(image)
                 .addOnSuccessListener(new OnSuccessListener<List<Barcode>>() {
                                           @Override
                                           public void onSuccess(List<Barcode> barcodes) {
@@ -410,7 +463,7 @@ if(adMobAPI.mInterstitialAd!=null){
                     public void onFailure(@NonNull Exception e) {
                         // Task failed with an exception
                         // ...
-                        Log.d(TAG, "onFailure: "+e);
+                        Log.d(TAG, "onFailure: " + e);
                         BarcodeNotFoundError();
                         ShowLoadingView(false);
                     }
@@ -418,6 +471,7 @@ if(adMobAPI.mInterstitialAd!=null){
 
 
     }
+
     public void getBarcode(List<Barcode> barcodes) {
         if (barcodes != null) {
             if (!barcodes.isEmpty()) {
@@ -489,16 +543,16 @@ if(adMobAPI.mInterstitialAd!=null){
                     @Override
                     public void run() {
                         oldBarcodeRaw = " ";
-                        if(!appReviewTask.isAppReviewed()){
+                        if (!appReviewTask.isAppReviewed()) {
                             appReviewTask.requestAppReview();
                         }
 
                     }
                 }, 4000);
 
-                Map<String,String> aa=new HashMap<>();
-                aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED),"1");
-                appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED),aa);
+                Map<String, String> aa = new HashMap<>();
+                aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED), "1");
+                appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED), aa);
 
 
    /* for (Barcode barcode: barcodes) {
@@ -577,9 +631,9 @@ if(adMobAPI.mInterstitialAd!=null){
         }
 
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_TEXT),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_TEXT),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_TEXT), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_TEXT), aa);
 
 
     }
@@ -606,9 +660,9 @@ if(adMobAPI.mInterstitialAd!=null){
 
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_URL),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_URL),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_URL), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_URL), aa);
 
 
     }
@@ -658,9 +712,9 @@ if(adMobAPI.mInterstitialAd!=null){
 
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_EMAIL),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_EMAIL),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_EMAIL), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_EMAIL), aa);
 
     }
 
@@ -685,10 +739,9 @@ if(adMobAPI.mInterstitialAd!=null){
 
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE),aa);
-
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE), aa);
 
 
     }
@@ -715,9 +768,9 @@ if(adMobAPI.mInterstitialAd!=null){
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE_SMS),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE_SMS),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE_SMS), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_PHONE_SMS), aa);
 
 
     }
@@ -758,9 +811,9 @@ if(adMobAPI.mInterstitialAd!=null){
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_WIFI),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_WIFI),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_WIFI), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_WIFI), aa);
 
     }
 
@@ -786,9 +839,9 @@ if(adMobAPI.mInterstitialAd!=null){
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Geo),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Geo),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Geo), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Geo), aa);
 
 
     }
@@ -808,8 +861,8 @@ if(adMobAPI.mInterstitialAd!=null){
             qrEvent.Description = cal.getDescription();
             qrEvent.Org = cal.getOrganizer();
             qrEvent.Location = cal.getLocation();
-qrEvent.StartTimeRaw=cal.getStart().getRawValue();
-qrEvent.EndTimeRaw=cal.getEnd().getRawValue();
+            qrEvent.StartTimeRaw = cal.getStart().getRawValue();
+            qrEvent.EndTimeRaw = cal.getEnd().getRawValue();
 
             QRCodeFile qrCodeFile = new QRCodeFile();
             qrCodeFile.type = QRCodeTypeConstants.QRCODE_TYPE_CALENDER;
@@ -819,9 +872,9 @@ qrEvent.EndTimeRaw=cal.getEnd().getRawValue();
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Calender),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Calender),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Calender), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_Calender), aa);
 
 
     }
@@ -859,9 +912,9 @@ qrEvent.EndTimeRaw=cal.getEnd().getRawValue();
             AppDB.qrcodeDao().insert(qrCodeFile);
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic), aa);
 
     }
 
@@ -872,7 +925,6 @@ qrEvent.EndTimeRaw=cal.getEnd().getRawValue();
         startActivity(intent);
 
     }
-
 
     public List<QRCodeFile> getHistory() {
         return AppDB.qrcodeDao().getMyQRCodeAll();
@@ -889,25 +941,22 @@ qrEvent.EndTimeRaw=cal.getEnd().getRawValue();
         if (type == QRCodeTypeConstants.QRCODE_TYPE_DRIVING_LIC_ID) {
             Bundle bundle = new Bundle();
             bundle.putString("json", gson.toJson(qrCodeFile.DrivingLicID));
-setFragment(new DrivingLicQRCodeOpenFragment(),bundle,"history",true);
+            setFragment(new DrivingLicQRCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_TEXT) {
-            String text=qrCodeFile.qrText.text;
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_TEXT) {
+            String text = qrCodeFile.qrText.text;
             Bundle bundle = new Bundle();
             bundle.putString("t", text);
-            setFragment(new RawTextQRCodeOpenFragment(),bundle,"history",true);
+            setFragment(new RawTextQRCodeOpenFragment(), bundle, "history", true);
 
 
-
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_EMAIL) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_EMAIL) {
             Bundle bundle = new Bundle();
 
             String email = qrCodeFile.email.email;
             String subject;
             if (qrCodeFile.email.subject != null || qrCodeFile.email.subject != "") {
-                subject =qrCodeFile.email.subject;
+                subject = qrCodeFile.email.subject;
             } else {
                 subject = "x";
             }
@@ -925,101 +974,92 @@ setFragment(new DrivingLicQRCodeOpenFragment(),bundle,"history",true);
             bundle.putString("body", body);
             bundle.putInt("type", email_type);
 
-            setFragment(new EmailQROpenFragment(),bundle,"history",true);
+            setFragment(new EmailQROpenFragment(), bundle, "history", true);
 
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_Facetime) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_Facetime) {
 
             // Text
-            String text=qrCodeFile.qrFaceTime.id;
+            String text = qrCodeFile.qrFaceTime.id;
             Bundle bundle = new Bundle();
             bundle.putString("t", text);
-            setFragment(new RawTextQRCodeOpenFragment(),bundle,"history",true);
+            setFragment(new RawTextQRCodeOpenFragment(), bundle, "history", true);
 
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_Geo) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_Geo) {
             Bundle bundle = new Bundle();
             bundle.putDouble("lat", Double.parseDouble(qrCodeFile.qrGeoLoc.lat));
-            bundle.putDouble("lng",Double.parseDouble(qrCodeFile.qrGeoLoc.longt));
-            setFragment(new GeoQrCodeOpenFragment(),bundle,"history",true);
+            bundle.putDouble("lng", Double.parseDouble(qrCodeFile.qrGeoLoc.longt));
+            setFragment(new GeoQrCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_SMS) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_SMS) {
 
             String ph = qrCodeFile.qrSms.sms_phone;
             String msg = qrCodeFile.qrSms.sms;
             Bundle bundle = new Bundle();
             bundle.putString("phone", ph);
             bundle.putString("msg", msg);
-            setFragment(new PhoneQrCodeOpenFragment(),bundle,"history",true);
+            setFragment(new PhoneQrCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_Tele) {
-            String ph = qrCodeFile.qrPhone.CountryCode+qrCodeFile.qrPhone.Phone;
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_Tele) {
+            String ph = qrCodeFile.qrPhone.CountryCode + qrCodeFile.qrPhone.Phone;
             Bundle bundle = new Bundle();
             bundle.putString("phone", ph);
-            setFragment(new PhoneQrCodeOpenFragment(),bundle,"history",true);
+            setFragment(new PhoneQrCodeOpenFragment(), bundle, "history", true);
 
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_VCARD) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_VCARD) {
 
 
             Bundle bundle = new Bundle();
 
             bundle.putString("json", gson.toJson(qrCodeFile.qrvCard));
 
-            setFragment(new RawTextQRCodeOpenFragment(),bundle,"history",true);
+            setFragment(new RawTextQRCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_WIFI) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_WIFI) {
             String ssid = qrCodeFile.qrWifi.SSID;
             String pass = qrCodeFile.qrWifi.Password;
             int encType = WiFiQrCodeOpenFragment.TYPE_OPEN;
-            if(qrCodeFile.qrWifi.WPA.equals("WPA")){
-             encType= WiFiQrCodeOpenFragment.TYPE_WPA;
-            }else if(qrCodeFile.qrWifi.WPA.equals("WEP")){
-                encType=WiFiQrCodeOpenFragment.TYPE_WEP;
+            if (qrCodeFile.qrWifi.WPA.equals("WPA")) {
+                encType = WiFiQrCodeOpenFragment.TYPE_WPA;
+            } else if (qrCodeFile.qrWifi.WPA.equals("WEP")) {
+                encType = WiFiQrCodeOpenFragment.TYPE_WEP;
             }
             Bundle bundle = new Bundle();
             bundle.putString("ssid", ssid);
             bundle.putString("pass", pass);
             bundle.putInt("type", encType);
-setFragment(new WiFiQrCodeOpenFragment(),bundle,"history",true);
+            setFragment(new WiFiQrCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_CALENDER) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_CALENDER) {
             Bundle bundle = new Bundle();
             bundle.putString("json", gson.toJson(qrCodeFile.event));
-setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
+            setFragment(new CalenderQrCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else if (type == QRCodeTypeConstants.QRCODE_TYPE_WEBSITE) {
+        } else if (type == QRCodeTypeConstants.QRCODE_TYPE_WEBSITE) {
 
-            String url=qrCodeFile.qrWebsite.url;
+            String url = qrCodeFile.qrWebsite.url;
             Bundle bundle = new Bundle();
             bundle.putString("url", url);
-            setFragment(new URLQrCodeOpenFragment(),bundle,"history",true);
+            setFragment(new URLQrCodeOpenFragment(), bundle, "history", true);
 
-        }
-        else{
-            String text=qrCodeFile.qrText.text;
+        } else {
+            String text = qrCodeFile.qrText.text;
             Bundle bundle = new Bundle();
             bundle.putString("t", text);
-            setFragment(new RawTextQRCodeOpenFragment(),bundle,"history",true);
+            setFragment(new RawTextQRCodeOpenFragment(), bundle, "history", true);
 
         }
 
-        Map<String,String> aa=new HashMap<>();
-        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_OPEN_HISTORY),"1");
-        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic),aa);
+        Map<String, String> aa = new HashMap<>();
+        aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_OPEN_HISTORY), "1");
+        appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_BARCODE_SCANNED_DrivingLic), aa);
 
 
     }
 
-    public void camCapture(){
+    public void camCapture() {
 
         File file = new File(getFilesDir(), "img_cache.png");
         ShowLoadingView(false);
@@ -1067,6 +1107,7 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
         }
 
     }
+
     public void openGallery() {
 
 
@@ -1100,7 +1141,7 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
 
 
                 } catch (IOException e) {
-                    Log.d(TAG, "onActivityResult: "+e);
+                    Log.d(TAG, "onActivityResult: " + e);
                     ShowLoadingView(false);
 
                 }
@@ -1112,58 +1153,20 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
 
             }
         } else {
-            Log.e(TAG, "onActivityResult: #645" );
+            Log.e(TAG, "onActivityResult: #645");
             ShowLoadingView(false);
 
         }
     }
 
-
-    ActivityResultLauncher<Intent> openGalleryApp = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    //Bundle extras = result.getData().getExtras();
-                    Log.d(TAG, "onActivityResult: " + result);
-                    //Bitmap imageBitmap = (Bitmap) extras.get("data");
-                    //   imageView1.setImageBitmap(imageBitmap);
-                    //     Bundle extras = result.getData().getExtras();
-                    //Bundle extras = result.getData().getExtras();
-                    if (result.getData() != null) {
-                        Intent i = result.getData();
-                        Uri uri = i.getData();
-                        Log.d(TAG, "onActivityResult: " + i.getData());
-
-                        ShowLoadingView(false);
-
-                        CropImage.activity(uri)
-                                .setAutoZoomEnabled(true)
-                                .setMultiTouchEnabled(true)
-                                .start(MainActivity.this);
-
-
-
-                    } else {
-                           ShowLoadingView(false);
-
-                    }
-
-
-
-
-                }
-            });
-
-
-    public void BarcodeNotFoundError(){
+    public void BarcodeNotFoundError() {
         //isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
 
         runOnUiThread(() -> {
 
-            if(isAutoScan){
+            if (isAutoScan) {
 
-            }else {
+            } else {
                 Toast.makeText(this, "No Barcode Found", Toast.LENGTH_SHORT).show();
             }
 
@@ -1209,6 +1212,22 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
                 Manifest.permission.ACCESS_FINE_LOCATION);
     }*/
 
+        // Notification
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED) {
+                // FCM SDK (and your app) can post notifications.
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // TODO: display an educational UI explaining to the user the features that will be enabled
+                //       by them granting the POST_NOTIFICATION permission. This UI should provide the user
+                //       "OK" and "No thanks" buttons. If the user selects "OK," directly request the permission.
+                //       If the user selects "No thanks," allow the user to continue without notifications.
+            } else {
+                // Directly ask for the permission
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
     }
 
     @Override
@@ -1241,9 +1260,9 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
         return true;
     }
 
-// in-app Billing
-    void BillingStart(){
-        isSubscribed=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
+    // in-app Billing
+    void BillingStart() {
+        isSubscribed = cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
 
         gPlayBilling.init(new BillingClientStateListener() {
             @Override
@@ -1254,8 +1273,8 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
                 gPlayBilling.fetchPayments((billingResult1, list) -> {
-                    Log.d(TAG, "onBillingSetupFinished: "+list.toString());
-                    if(list.isEmpty()){
+                    Log.d(TAG, "onBillingSetupFinished: " + list.toString());
+                    if (list.isEmpty()) {
                         isSubscribed = false;
                     }
 
@@ -1287,18 +1306,130 @@ setFragment(new CalenderQrCodeOpenFragment(),bundle,"history",true);
         PremiumUserUI();
 
     }
-    void PremiumUserUI(){
 
-if(isSubscribed){
-    Map<String,String> aa=new HashMap<>();
-    aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_PREMIUM_MEMBER),"1");
-    appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_PREMIUM_MEMBER),aa);
-}else{
-    Map<String,String> aa=new HashMap<>();
-    aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NON_PREMIUM_MEMBER),"1");
-    appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NON_PREMIUM_MEMBER),aa);
+    void PremiumUserUI() {
 
-}
+        if (isSubscribed) {
+            Map<String, String> aa = new HashMap<>();
+            aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_PREMIUM_MEMBER), "1");
+            appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_PREMIUM_MEMBER), aa);
+        } else {
+            Map<String, String> aa = new HashMap<>();
+            aa.put(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NON_PREMIUM_MEMBER), "1");
+            appAnalytics.logEvent(getString(devesh.ephrine.qr.common.R.string.ANALYTICS_EVENT_NON_PREMIUM_MEMBER), aa);
+
+        }
 
     }
+
+
+
+    public void notification() {
+        Intent intent = getIntent();
+
+        // Check if the intent has extra data
+        if (intent != null) {
+            // Retrieve the data from the intent
+            // String data = intent.getStringExtra("key");
+
+            // Use the data as needed
+            Log.d("MainActivity", "Received data from intent:");
+
+            String intentDataString = (intent.getData() != null) ? intent.getData().toString() : "null";
+
+            String notificationTitle = null;
+            String notificationMessage = null;
+
+            Bundle extras = intent.getExtras();
+            if (extras != null) {
+                notificationTitle = extras.getString("title");
+                notificationMessage = extras.getString("message");
+            }
+
+            // Fallback if not found in extras (can happen depending on how notification was created)
+            if (notificationTitle == null) {
+                notificationTitle = intent.getStringExtra("title");
+            }
+            if (notificationMessage == null) {
+                notificationMessage = intent.getStringExtra("message");
+            }
+
+
+            Log.d(TAG, "onCreate: " +
+                    "Received data from intent:\n\n" +
+                    intentDataString + "\n\n" +
+                    "=====\n" +
+                    "Received extra from intent:\n\n\n\n" +
+                    "// Works for App Foreground\n" +
+                    "notificationTitle: " + notificationTitle + "\n" +
+                    "notificationMessage: " + notificationMessage + "\n\n\n" +
+                    "notificationTitle: " + intent.getStringExtra("title") + "\n" + // Kept for direct comparison with Kotlin
+                    "notificationMessage: " + intent.getStringExtra("message") + "\n\n\n" + // Kept for direct comparison
+                    "// Works for App Background\n" +
+                    "notificationTitle: " + intent.getStringExtra("title") + "\n" + // Kept for direct comparison
+                    "notificationMessage: " + intent.getStringExtra("message") + "\n"
+            );
+
+
+            try {
+                String mUrl = intent.getStringExtra("url");
+                if (mUrl != null) {
+                    if (!mUrl.isEmpty()) {
+                        openChromeCustomTab(mUrl);
+                    }
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "notification: ", e);
+            }
+        }
+    }
+
+    public void openChromeCustomTab(String url) {
+        // firebaseAnalytics.logEvent(Analytics_EVENT_USER_OPEN_NOTIFICATION, new Bundle());
+        Log.d(TAG, "openChromeCustomTab: Opening Chrome Tab : " + url);
+        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
+        customTabsIntent.launchUrl(this, Uri.parse(url));
+    }
+
+    /**
+     DEPRECIATED
+     @Override
+     public void onBackPressed() {
+
+     if (fragmentManager.findFragmentByTag("home") != null) {
+     if (fragmentManager.findFragmentByTag("home").isVisible()) {
+     fragmentManager.findFragmentByTag("home").onDestroy();
+     MainActivity.this.finish();
+     }
+
+     }
+
+     //     super.onBackPressed();
+
+     if (fragmentManager != null) {
+     if (fragmentManager.findFragmentByTag("create") != null) {
+     if (fragmentManager.findFragmentByTag("create").isVisible()) {
+
+     MainActivity.this.finish();
+
+     }
+     }
+
+
+     }
+     super.onBackPressed();
+
+     if (fragmentManager.findFragmentByTag("history") != null) {
+     if (fragmentManager.findFragmentByTag("history").isVisible()) {
+     fragmentManager.findFragmentByTag("history").onDestroy();
+     if (adMobAPI.mInterstitialAd != null) {
+     adMobAPI.ShowInterstitialAd();
+     }
+     }
+
+     }
+
+
+     }
+     */
 }

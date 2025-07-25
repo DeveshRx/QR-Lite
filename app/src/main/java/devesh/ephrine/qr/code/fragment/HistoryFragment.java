@@ -22,7 +22,8 @@ public class HistoryFragment extends Fragment {
 
     FragmentHistoryBinding mBinding;
     List<QRCodeFile> qrCodeFileList;
-AdMobAPI adMobAPI;
+    AdMobAPI adMobAPI;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +32,7 @@ AdMobAPI adMobAPI;
             //          mParam2 = getArguments().getString(ARG_PARAM2);
         }
         qrCodeFileList = new ArrayList<>();
-adMobAPI=new AdMobAPI(getActivity());
+        adMobAPI = new AdMobAPI(getActivity());
     }
 
     @Override
@@ -80,7 +81,8 @@ adMobAPI=new AdMobAPI(getActivity());
         mBinding.qrCodeHistoryRecycleview.setAdapter(mAdapter);
 
     }
-    void loadAds(){
-        adMobAPI.setAdaptiveBanner(mBinding.adFrame,getActivity());
+
+    void loadAds() {
+        adMobAPI.setAdaptiveBanner(mBinding.adFrame, getActivity());
     }
 }

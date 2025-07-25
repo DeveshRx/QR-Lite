@@ -1,10 +1,6 @@
 package devesh.ephrine.qr.code.fragment;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Point;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -13,25 +9,18 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
-import androidx.camera.core.MeteringPoint;
 import androidx.camera.core.Preview;
 import androidx.camera.core.TorchState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -40,7 +29,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
-import com.theartofdev.edmodo.cropper.CropImage;
 
 import java.io.File;
 import java.util.List;
@@ -49,25 +37,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import devesh.ephrine.qr.code.MainActivity;
-import devesh.ephrine.qr.code.R;
 import devesh.ephrine.qr.code.databinding.FragmentCameraBinding;
 import devesh.ephrine.qr.common.AdMobAPI;
 import devesh.ephrine.qr.common.BarcodeAPI;
 import devesh.ephrine.qr.common.CachePref;
 
 public class CameraFragment extends Fragment {
+    final static boolean isAutoScan = true;
     FragmentCameraBinding mBinding;
     String TAG = "CameraFragment";
     ImageCapture imageCapture;
     ExecutorService cameraExecutor = Executors.newFixedThreadPool(2);
     Camera camera;
+    CachePref cachePref;
+    BarcodeAPI barcodeAPI;
+    AdMobAPI adMobAPI;
+    boolean isSubscribed;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-     final static boolean isAutoScan=true;
-CachePref cachePref;
-BarcodeAPI barcodeAPI;
-AdMobAPI adMobAPI;
-
-boolean isSubscribed;
 
     public CameraFragment() {
         // Required empty public constructor
@@ -95,10 +81,10 @@ boolean isSubscribed;
             //      mParam1 = getArguments().getString(ARG_PARAM1);
             //    mParam2 = getArguments().getString(ARG_PARAM2);
         }
-isSubscribed=false;
+        isSubscribed = false;
         cameraProviderFuture = ProcessCameraProvider.getInstance(getActivity());
-cachePref=new CachePref(getActivity());
-adMobAPI=new AdMobAPI(getActivity());
+        cachePref = new CachePref(getActivity());
+        adMobAPI = new AdMobAPI(getActivity());
 
 
 //isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
@@ -121,15 +107,15 @@ adMobAPI=new AdMobAPI(getActivity());
     @Override
     public void onStart() {
         super.onStart();
-        isSubscribed=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
-        if(isSubscribed){
+        isSubscribed = cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_isSubscribed));
+        if (isSubscribed) {
             mBinding.PremiumMemberBadge.getRoot().setVisibility(View.VISIBLE);
-        }else{
+        } else {
             mBinding.PremiumMemberBadge.getRoot().setVisibility(View.GONE);
         }
 
         LoadAds();
-     //   isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
+        //   isAutoScan=cachePref.getBoolean(getString(devesh.ephrine.qr.common.R.string.Pref_AutoScan));
 
         mBinding.FlashChip.setOnClickListener(view -> {
             ToggleFlash();
@@ -140,12 +126,10 @@ adMobAPI=new AdMobAPI(getActivity());
         });
 
 
-
-
-        if(isAutoScan){
+        if (isAutoScan) {
 
             mBinding.CameraCaptureButton.setVisibility(View.GONE);
-        }else{
+        } else {
             mBinding.CameraCaptureButton.setVisibility(View.VISIBLE);
             mBinding.CameraCaptureButton.setOnClickListener(view -> {
                 onClick();
@@ -202,13 +186,12 @@ adMobAPI=new AdMobAPI(getActivity());
             public void analyze(@NonNull ImageProxy imageProxy) {
                 int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
                 // insert your code here.
-               // @SuppressLint("UnsafeOptInUsageError")
-               // InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), rotationDegrees);
+                // @SuppressLint("UnsafeOptInUsageError")
+                // InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), rotationDegrees);
 
-                analyzeIMG(imageProxy,rotationDegrees);
+                analyzeIMG(imageProxy, rotationDegrees);
 
-            //    imageProxy.close();
-
+                //    imageProxy.close();
 
 
                 // after done, release the ImageProxy object
@@ -234,15 +217,14 @@ adMobAPI=new AdMobAPI(getActivity());
         preview.setSurfaceProvider(mBinding.viewFinder.getSurfaceProvider());
 
         try {
-         //   camera = cameraProvider.bindToLifecycle(this, cameraSelector,imageAnalysis, imageCapture, preview);
+            //   camera = cameraProvider.bindToLifecycle(this, cameraSelector,imageAnalysis, imageCapture, preview);
 
-            if(isAutoScan){
+            if (isAutoScan) {
                 camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
-            }else{
+            } else {
                 //camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector,imageCapture, preview);
                 camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture, preview);
             }
-
 
 
         } catch (Exception e) {
@@ -254,30 +236,30 @@ adMobAPI=new AdMobAPI(getActivity());
 
     public void analyzeIMG(ImageProxy imageProxy, int rotationDegrees) {
 
-          @SuppressLint("UnsafeOptInUsageError")
-          InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), rotationDegrees);
+        @SuppressLint("UnsafeOptInUsageError")
+        InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), rotationDegrees);
         barcodeAPI.getScanner().process(image)
                 .addOnSuccessListener(new OnSuccessListener<List<Barcode>>() {
                                           @Override
                                           public void onSuccess(List<Barcode> barcodes) {
                                               // Task completed successfully
                                               if (barcodes.isEmpty()) {
-                                                  if(getActivity() instanceof MainActivity){
-                                                      ((MainActivity)getActivity()).BarcodeNotFoundError();
+                                                  if (getActivity() instanceof MainActivity) {
+                                                      ((MainActivity) getActivity()).BarcodeNotFoundError();
 
                                                   }
                                                   Log.d(TAG, "onSuccess: barcodes.isEmpty()");
                                               }
-                                              if(isAutoScan){
-                                                  if(getActivity() instanceof MainActivity){
-                                                      ((MainActivity)getActivity()).getBarcode(barcodes);
+                                              if (isAutoScan) {
+                                                  if (getActivity() instanceof MainActivity) {
+                                                      ((MainActivity) getActivity()).getBarcode(barcodes);
 
                                                   }
 
 
                                               }
-                                              if(getActivity() instanceof MainActivity){
-                                                  ((MainActivity)getActivity()).ShowLoadingView(false);
+                                              if (getActivity() instanceof MainActivity) {
+                                                  ((MainActivity) getActivity()).ShowLoadingView(false);
 
                                               }
 
@@ -289,11 +271,11 @@ adMobAPI=new AdMobAPI(getActivity());
                     public void onFailure(@NonNull Exception e) {
                         // Task failed with an exception
                         // ...
-                        Log.d(TAG, "onFailure: "+e);
-                        if(getActivity() instanceof MainActivity){
+                        Log.d(TAG, "onFailure: " + e);
+                        if (getActivity() instanceof MainActivity) {
 
-                            ((MainActivity)getActivity()).BarcodeNotFoundError();
-                            ((MainActivity)getActivity()).ShowLoadingView(false);
+                            ((MainActivity) getActivity()).BarcodeNotFoundError();
+                            ((MainActivity) getActivity()).ShowLoadingView(false);
                         }
                     }
                 }).addOnCompleteListener(new OnCompleteListener<List<Barcode>>() {
@@ -302,14 +284,15 @@ adMobAPI=new AdMobAPI(getActivity());
 
                         imageProxy.close();
                     }
-                });;
+                });
+        ;
 
 
-
-       // imageProxy.close();
+        // imageProxy.close();
 
 
     }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -317,7 +300,7 @@ adMobAPI=new AdMobAPI(getActivity());
 
         try {
             adMobAPI.DestroyAds();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
     }
@@ -345,7 +328,7 @@ adMobAPI=new AdMobAPI(getActivity());
                     public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
                         // insert your code here.
                         Log.d(TAG, "onImageSaved: ");
-                        ((MainActivity)getActivity()).camCapture();
+                        ((MainActivity) getActivity()).camCapture();
 
                     }
 
@@ -359,8 +342,8 @@ adMobAPI=new AdMobAPI(getActivity());
         );
     }
 
-    void LoadAds(){
-        adMobAPI.loadNativeAd(mBinding.adFrame,getActivity());
+    void LoadAds() {
+        adMobAPI.setAdaptiveBanner(mBinding.adFrame, getActivity());
     }
 
 
