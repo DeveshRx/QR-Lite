@@ -16,6 +16,8 @@ local.properties
 
 app.env
 
+*.env
+
 /APK/
 
 #/APK/bundle/internal
