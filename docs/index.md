@@ -30,6 +30,9 @@ Linear formats: Codabar, Code 39, Code 93, Code 128, EAN-8, EAN-13, ITF, UPC-A, 
 
 ## Download
 
+[Download .APK for Android ](https://github.com/DeveshRx/QR-Lite/releases/latest/download/app-release.apk)
+
+
 [![download](https://deveshrx.github.io/QR-Lite/img/google-play-badge.png)](https://play.google.com/store/apps/details?id=devesh.ephrine.qr.code)
 
 <br>
